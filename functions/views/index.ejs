@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>車庫証明マップ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css" />
+    <style type="text/css">
+      @page { 
+        size:A4 landscape; 
+        margin: 0;
+      }
+      #target {
+        position: absolute; top: 0px; z-index: 1;
+      }
+
+      #map-a {
+        position: absolute; top: 55mm; left: 37mm; z-index: 2;
+        height: 260mm;
+        width: 240mm;
+      }
+      #map-b {
+        position: absolute; top: 55mm; left: 286mm; z-index: 2;
+        height: 260mm;
+        width: 240mm;
+      }
+
+    </style>
+  </head>
+  <body>
+      <div id="target">
+        <img src="./images/shako.jpg">
+      </div>
+      <div id="map-a">
+          test
+      </div>
+      <div id="map-b">test2</div>
+      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://maps.googleapis.com/maps/api/js?key=<%= apiKey %>&callback=initMap"
+      async defer></script>
+      <script>
+        function createMarker(map, poistion) {
+          return new google.maps.Marker({
+            position: poistion,
+            draggable: true,
+            flat: true,
+            map: map
+          });
+        }
+
+        function mapA() {
+            // map a
+            const map = new google.maps.Map(document.getElementById('map-a'), {
+              center: {lat: 35.68406, lng: 139.774466},
+              zoom: 8
+            });
+            
+            const line = new google.maps.Polyline({
+              strokeColor: '#FF0000',
+              strokeWeight: 8,
+              strokeOpacity: 0.6,
+              geodesic: false,
+              map
+            });
+
+            map.addListener('click', (event) => {
+              const path = line.getPath()
+              if (path.length > 1)  {
+                return
+              }
+
+              const marker = createMarker(map, event.latLng)
+              path.push(event.latLng)
+
+              // ルート修正処理
+              let number = null
+              marker.addListener('dragstart', () => {
+                path.forEach((element, index) => {
+                  if (marker.position.equals(element)) {
+                    number = index
+                    return
+                  }
+                })
+              })
+
+              marker.addListener('dragend', () => {
+                if (number !== null ) {
+                  path.setAt(number, marker.getPosition())
+                  number = null
+                }
+              })
+
+            })
+        }
+
+        function mapB() {
+            // map a
+            const map = new google.maps.Map(document.getElementById('map-b'), {
+              center: {lat: 35.68406, lng: 139.774466},
+              zoom: 8,
+              mapTypeId: 'satellite'
+            });
+
+            const poligon = new google.maps.Polygon({
+              strokeColor: '#FF0000',
+              strokeOpacity: 0.8,
+              strokeWeight: 8,
+              fillColor: '#FF0000',
+              fillOpacity: 0.4,
+              draggable: true,
+              map: map
+            })
+            
+            let paths = []
+            map.addListener('click', (event) => {
+              paths.push(event.latLng)
+              poligon.setPath(paths)
+            })
+
+            poligon.addListener('dblclick', (event) => {
+              paths = []
+              poligon.setPath(paths)
+            })
+        }
+
+        function initMap() {
+          mapA()
+          mapB()
+        }
+
+      </script>
+  </body>
+</html>
