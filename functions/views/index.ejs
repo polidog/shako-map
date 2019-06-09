@@ -9,6 +9,7 @@
         size:A4 landscape; 
         margin: 0;
       }
+
       #target {
         position: absolute; top: 0px; z-index: 1;
       }
@@ -23,7 +24,17 @@
         height: 260mm;
         width: 240mm;
       }
+      
+      h1.info {
+        font-weight: bold;
+        font-size: 15px;
+        margin: 0;
+        padding: 0;
+      }
 
+      .gm-ui-hover-effect {
+        display: none !important; 
+      }
     </style>
   </head>
   <body>
@@ -47,13 +58,8 @@
           });
         }
 
-        function mapA() {
-            // map a
-            const map = new google.maps.Map(document.getElementById('map-a'), {
-              center: {lat: 35.68406, lng: 139.774466},
-              zoom: 8
-            });
-            
+        function mapA_init(map) {
+          
             const line = new google.maps.Polyline({
               strokeColor: '#FF0000',
               strokeWeight: 8,
@@ -69,6 +75,11 @@
               }
 
               const marker = createMarker(map, event.latLng)
+              const infowindow = new google.maps.InfoWindow({
+                content: path.length === 0 ? "<h1 class='info'>自宅</h1>": "<h1 class='info'>駐車場</h1>"
+              });
+              infowindow.open(map, marker);
+
               path.push(event.latLng)
 
               // ルート修正処理
@@ -92,14 +103,7 @@
             })
         }
 
-        function mapB() {
-            // map a
-            const map = new google.maps.Map(document.getElementById('map-b'), {
-              center: {lat: 35.68406, lng: 139.774466},
-              zoom: 8,
-              mapTypeId: 'satellite'
-            });
-
+        function mapB_init(map) {
             const poligon = new google.maps.Polygon({
               strokeColor: '#FF0000',
               strokeOpacity: 0.8,
@@ -123,8 +127,43 @@
         }
 
         function initMap() {
-          mapA()
-          mapB()
+          let isSync = true
+          const mapA = new google.maps.Map(document.getElementById('map-a'), {
+              center: {lat: 35.68406, lng: 139.774466},
+              zoom: 8
+            });
+
+          const mapB = new google.maps.Map(document.getElementById('map-b'), {
+            center: {lat: 35.68406, lng: 139.774466},
+            zoom: 8,
+            mapTypeId: 'hybrid',
+            tilt: 0
+          });
+
+          const changeEvent = () => {
+            if (isSync) {
+              mapB.setCenter(mapA.getCenter())
+              mapB.setZoom(mapA.getZoom())
+            }
+          }
+          
+          mapA.addListener('dragend', changeEvent)
+          mapA.addListener('zoom_changed', changeEvent)
+
+          mapB.addListener('dragend', () => {
+            console.log('stop sync')
+            isSync = false
+          })
+          // mapB.addListener('zoom_changed', () => {
+          //   console.log('stop sync')
+          //   // isSync = false
+          // })
+
+          mapA_init(mapA)
+          mapB_init(mapB)
+
+          mapB
+
         }
 
       </script>
